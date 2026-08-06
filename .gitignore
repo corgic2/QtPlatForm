@@ -16,9 +16,13 @@
 *.swp
 .DS_Store
 
+# ============ Per-user build customization (see scripts/qtbuild.env.example) ==
+/qtbuild.env
+
 # ============ Large archives (unpacked toolchain dirs are committed instead) ===
 tools/*.tar.xz
 
 # Symlink to the Qt source dir (git treats symlinks as files, so the trailing-
 # slash rule above does not match it)
 /Qt/5.15.2/Src
+.reasonix

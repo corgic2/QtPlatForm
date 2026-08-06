@@ -4,9 +4,18 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-export QT_SRC="$REPO_DIR/Qt/5.15.2/Src"
-export QT_BUILD="$REPO_DIR/Qt/5.15.2/build"
-export QT_HOST="$QT_BUILD/x86_64-linux-gnu/install"
+# Optional per-user customization: if <repo>/qtbuild.env exists, source it.
+# Template: scripts/qtbuild.env.example. It may set/override QT_SRC, QT_BUILD,
+# QT_HOST, VENDORED_TC, CROSS_PREFIX, SYSROOT, TARGET_SUFFIX ... Alternatively
+# export the same variables in your shell before running the build scripts.
+if [ -f "$REPO_DIR/qtbuild.env" ]; then
+  # shellcheck disable=SC1091
+  source "$REPO_DIR/qtbuild.env"
+fi
+
+export QT_SRC="${QT_SRC:-$REPO_DIR/Qt/5.15.2/Src}"
+export QT_BUILD="${QT_BUILD:-$REPO_DIR/Qt/5.15.2/build}"
+export QT_HOST="${QT_HOST:-$QT_BUILD/x86_64-linux-gnu/install}"
 
 readonly -a QT_ADDON_MODULES=(
   qtdeclarative

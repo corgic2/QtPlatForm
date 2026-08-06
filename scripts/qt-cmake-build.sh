@@ -15,7 +15,7 @@
 #
 # 选项：
 #   --repo <path>        指定 qtplatform 仓库根
-#   --target <id|all>    目标：x64 / arm64 / all（可多次，或 all）
+#   --target <id|all>    目标：x64 / arm64 / arm32 / all（可多次，或 all）
 #   --type <t>           Debug | Release（默认 Release）
 #   --build-dir <dir>    指定构建目录（默认 build-<id>，各目标独立）
 #   --clean              构建前清空构建目录
@@ -86,7 +86,7 @@ fi
 [ -d "$REPO/Qt/$QT_VER/build" ] || die "找不到 qtplatform 仓库（请设 QTPLATFORM_DIR 或用 --repo）。当前推断: $REPO"
 
 # ---------- 探测可用目标 ----------
-declare -a TARGET_IDS=() TARGET_DIRS=() TARGET_CROSS=()
+declare -a TARGET_IDS=() TARGET_DIRS=() TARGET_CROSS=() TARGET_TC=()
 detect_targets() {
   local d p tdir
   for d in "$REPO/Qt/$QT_VER/build"/*/install/lib/cmake/Qt5/Qt5Config.cmake; do
@@ -95,9 +95,10 @@ detect_targets() {
     for _ in 1 2 3 4 5; do p="$(dirname "$p")"; done
     tdir="$(basename "$p")"
     case "$tdir" in
-      x86_64-linux-gnu)  TARGET_IDS+=("x64");   TARGET_DIRS+=("$tdir"); TARGET_CROSS+=("no");;
-      aarch64-linux-gnu) TARGET_IDS+=("arm64"); TARGET_DIRS+=("$tdir"); TARGET_CROSS+=("yes");;
-      *)                 TARGET_IDS+=("$tdir"); TARGET_DIRS+=("$tdir"); TARGET_CROSS+=("yes");;
+      x86_64-linux-gnu)    TARGET_IDS+=("x64");   TARGET_DIRS+=("$tdir"); TARGET_CROSS+=("no");  TARGET_TC+=("");;
+      aarch64-linux-gnu*)  TARGET_IDS+=("arm64"); TARGET_DIRS+=("$tdir"); TARGET_CROSS+=("yes"); TARGET_TC+=("aarch64-linux-gnu.cmake");;
+      arm-linux-gnueabihf*) TARGET_IDS+=("arm32"); TARGET_DIRS+=("$tdir"); TARGET_CROSS+=("yes"); TARGET_TC+=("arm-linux-gnueabihf.cmake");;
+      *)                   TARGET_IDS+=("$tdir"); TARGET_DIRS+=("$tdir"); TARGET_CROSS+=("yes"); TARGET_TC+=("");;
     esac
   done
   [ ${#TARGET_IDS[@]} -gt 0 ] || die "在 $REPO/Qt/$QT_VER/build 下未检测到任何已安装的 Qt 目标"
@@ -183,6 +184,7 @@ elif [ -f "./qtbuild.local" ]; then LOCAL="./qtbuild.local"; fi
 build_one() {
   local idx="$1"
   local id="${TARGET_IDS[$idx]}" dir="${TARGET_DIRS[$idx]}" cross="${TARGET_CROSS[$idx]}"
+  local tc="${TARGET_TC[$idx]}"
   local prefix="$REPO/Qt/$QT_VER/build/$dir/install/lib/cmake"
   local builddir="${BUILD_DIR_OVERRIDE:-build-$id}"
 
@@ -190,7 +192,7 @@ build_one() {
   info "源码: $SRC"
   info "构建目录: $builddir"
   info "Qt prefix: $prefix"
-  [ "$cross" = yes ] && info "交叉编译: toolchain/aarch64-linux-gnu.cmake"
+  [ "$cross" = yes ] && info "交叉编译: toolchain/$tc"
 
   [ -d "$SRC" ] || die "源码目录不存在: $SRC"
   command -v cmake >/dev/null 2>&1 || die "未找到 cmake，请先安装"
@@ -213,7 +215,10 @@ build_one() {
 
   local -a args=(-S "$SRC" -B "$builddir" \
     -DCMAKE_PREFIX_PATH="$prefix" -DCMAKE_BUILD_TYPE="$TYPE")
-  [ "$cross" = yes ] && args+=(-DCMAKE_TOOLCHAIN_FILE="$REPO/toolchain/aarch64-linux-gnu.cmake")
+  [ "$cross" = yes ] && {
+    [ -n "$tc" ] || die "目标 $id 是交叉目标，但缺少对应的 CMake toolchain 文件"
+    args+=(-DCMAKE_TOOLCHAIN_FILE="$REPO/toolchain/$tc")
+  }
   if declare -p EXTRA_CMAKE_FLAGS >/dev/null 2>&1; then
     args+=("${EXTRA_CMAKE_FLAGS[@]}")
   fi
