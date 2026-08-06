@@ -1,0 +1,24 @@
+# ============ Qt 5.15.2 source ============
+# Cloned super-repo (large). Reproduce with:
+#   git clone --branch v5.15.2 https://code.qt.io/qt/qt5.git Qt/5.15.2/Src
+#   cd Qt/5.15.2/Src && perl init-repository   (qtwebengine is excluded on purpose)
+/Qt/5.15.2/Src/
+/Qt/qt-everywhere-src-5.15.2
+# ============ Intermediate build objects ============
+# Keep ONLY the final installed build products (build/<target>/install).
+# bld/ is the qtbase shadow build, bld-<module>/ the add-on module builds.
+/Qt/5.15.2/build/*/bld*/
+
+# ============ Logs ============
+/Qt/5.15.2/*.log
+
+# ============ Editor / OS noise ============
+*.swp
+.DS_Store
+
+# ============ Large archives (unpacked toolchain dirs are committed instead) ===
+tools/*.tar.xz
+
+# Symlink to the Qt source dir (git treats symlinks as files, so the trailing-
+# slash rule above does not match it)
+/Qt/5.15.2/Src

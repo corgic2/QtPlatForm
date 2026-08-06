@@ -1,0 +1,37 @@
+# qtbuild.local — 项目级扩展示例
+# 复制到你的工程根目录并改名为 qtbuild.local 即可生效。
+# 由 scripts/qt-cmake-build.sh 通过 source 加载；其中定义的变量/函数
+# 会在每个目标的构建过程中被读取。
+#
+# 可用变量（在钩子函数内可直接使用，bash 为动态作用域）：
+#   SRC        源码目录
+#   builddir   当前目标的构建目录
+#   id/dir     目标 id（x64/arm64）与底层目录名
+#   prefix     当前目标的 Qt cmake 前缀路径
+
+# 额外 cmake 参数（数组或字符串均可）
+EXTRA_CMAKE_FLAGS=(
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+  # -DSOME_FEATURE=ON
+)
+
+# 要求所选目标的 Qt 必须包含这些模块，缺失则构建前报错
+REQUIRED_QT_MODULES=(Widgets Svg Charts)
+
+# 配置前钩子：例如用 protoc / 代码生成器
+PRE_BUILD() {
+  echo "PRE_BUILD: 生成辅助代码..."
+  # protoc -I proto --cpp_out=src proto/*.proto
+}
+
+# 编译后钩子：例如拷贝资源、生成版本信息
+POST_BUILD() {
+  echo "POST_BUILD: 拷贝资源到 $builddir"
+  # cp -r "$SRC/assets" "$builddir/assets"
+}
+
+# 打包钩子：仅在使用 --deploy 时执行
+DEPLOY() {
+  echo "DEPLOY: 打包 $builddir"
+  # linuxdeployqt "$builddir/yourapp" -appimage
+}

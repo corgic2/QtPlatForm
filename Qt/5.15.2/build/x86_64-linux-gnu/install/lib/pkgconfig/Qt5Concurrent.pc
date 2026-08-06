@@ -1,0 +1,13 @@
+prefix=/home/brslf/WorkSpace/qtplatform/Qt/5.15.2/build/x86_64-linux-gnu/install
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+includedir=${prefix}/include
+
+
+Name: Qt5 Concurrent
+Description: Qt Concurrent module
+Version: 5.15.2
+Libs: -L${libdir} -lQt5Concurrent 
+Cflags: -DQT_CONCURRENT_LIB -I${includedir}/QtConcurrent -I${includedir}
+Requires: Qt5Core
+
